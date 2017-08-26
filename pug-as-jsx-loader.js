@@ -476,7 +476,7 @@ module.exports = function (jsxHelper, { pug, loaderUtils }) {
     });
   };
 
-  const renderPug = (source) => {
+  const renderPug = (source, resourcePath) => {
     // prepare for case sensitive
     let replaced = source
       .replace(/__jsx=/g, 'jsx-syntax--=')
@@ -550,7 +550,7 @@ module.exports = function (jsxHelper, { pug, loaderUtils }) {
       .replace(/key='\{.*?\}',([^)]*key='\{.*?\}')/, '$1');
 
     // render to html and restore case sensitive
-    replaced = pug.render(replaced, { pretty: true }).replace(/upper___([a-zA-Z])/g, (whole, p1) => p1.toUpperCase()).replace(/\{([^{}]+)\}/g, (whole, p1) => `{${p1.replace(/&quot;/g, '"')}}`);
+    replaced = pug.render(replaced, { pretty: true, filename: resourcePath }).replace(/upper___([a-zA-Z])/g, (whole, p1) => p1.toUpperCase()).replace(/\{([^{}]+)\}/g, (whole, p1) => `{${p1.replace(/&quot;/g, '"')}}`);
 
     // fixes
     replaced = replaced
@@ -618,7 +618,7 @@ module.exports = function (jsxHelper, { pug, loaderUtils }) {
     let macros = {};
     if (isJsFile) {
       replaced = source.replace(/\n(\s*)?(.*)\s+pug`([\s\S]+?)`/g, (whole, p1, p2, p3) => {
-        const result = renderPug(p3.trim());
+        const result = renderPug(p3.trim(), this.resourcePath);
         macros = Object.assign({}, macros, result.macros);
         const rendered = jsxHelper.beautify(result.replaced, {
           indent: p1.length + 2,
@@ -628,7 +628,7 @@ module.exports = function (jsxHelper, { pug, loaderUtils }) {
         return `\n${p1}${p2} (\n${rendered}\n${p1})`;
       });
     } else {
-      const rendered = renderPug(source);
+      const rendered = renderPug(source, this.resourcePath);
       replaced = rendered.replaced;
       macros = rendered.macros;
     }
